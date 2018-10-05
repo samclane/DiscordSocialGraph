@@ -96,5 +96,5 @@ However, it's still not apparent that user0 and user8 are friends. This is partl
 .58. Weights must get into the .8-.9 range before they start making a difference. Also, due to the complete randomness 
 of the data generation methods, some "strong friendships" may occur naturally, dwarfing any intentional bias. 
 
-The main objective is to find the "lynchpin" of the server; that is, the node in the graph 
+The main objective is to find the "linchpin" of the server; that is, the node in the graph 
 with the most incoming weight, signifying they cause the server's population and interaction levels to increase the most. 
