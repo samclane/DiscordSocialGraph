@@ -1,5 +1,5 @@
 import os
-import sys
+import argparse
 from ast import literal_eval
 
 import matplotlib.pyplot as plt
@@ -44,11 +44,18 @@ def graph_data(encoder: MultiLabelBinarizer, classifier: GaussianNB, noise_floor
 
 
 if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print("Usage: python process_data.py <filename>")
-        exit(-1)
-    df = pandas.read_csv(os.getcwd() + "\\" + str(sys.argv[1]))
+    parser = argparse.ArgumentParser()
+    parser.add_argument("filename", help="Name of file in the current working directory that contains the dataframe "
+                                         "info")
+    parser.add_argument("-nf", "--noise_floor", type=float)
+    args = parser.parse_args()
+    path = os.getcwd() + "\\" + args.filename
+    print(f"Reading {path}...")
+    df = pandas.read_csv(path)
     # pandas doesn't like saving lists; we have to rebuild `present` from string
     df['present'] = df['present'].apply(literal_eval)
     enc, clf = process_data(df)
-    graph_data(enc, clf)
+    if args.noise_floor:
+        graph_data(enc, clf, args.noise_floor)
+    else:
+        graph_data(enc, clf)
