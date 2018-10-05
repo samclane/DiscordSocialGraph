@@ -16,10 +16,12 @@ def process_data(df: pandas.DataFrame):
     clf = GaussianNB()
     print("Training classifier...")
     clf.fit(enc.fit_transform(df["present"]), list(df["member"]))
+    print("Done.")
     return enc, clf
 
 
 def graph_data(encoder: MultiLabelBinarizer, classifier: GaussianNB, noise_floor: float=0):
+    print("Building graph...")
     social_graph = nx.DiGraph()
     social_graph.add_nodes_from(classifier.classes_)
     for u in classifier.classes_:
@@ -37,6 +39,7 @@ def graph_data(encoder: MultiLabelBinarizer, classifier: GaussianNB, noise_floor
     pos = nx.spring_layout(social_graph)
     nx.draw(social_graph, pos, edgelist=edges, edge_color=weights, edge_cmap=plt.get_cmap("Blues"), with_labels=True,
             arrowstyle='fancy')
+    print("Done. Showing graph.")
     plt.show()
 
 

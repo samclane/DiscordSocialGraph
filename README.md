@@ -58,6 +58,30 @@ timestamp
 Saving data to C:\Users\SawyerPC\PycharmProjects\DiscordSocialGraph\data.csv.
 ```
 
+The data can then by processed by running `process_data.py`
+
+```
+$ python process_data.py data.csv
+Encoding data...
+      user0  user1  user2  user3  user4  user5  user6  user7  user8  user9
+0         1      1      1      1      1      0      1      1      1      1
+1         1      0      0      0      0      1      1      1      1      0
+2         1      0      1      1      1      1      1      1      1      1
+3         1      1      0      1      1      1      0      0      1      0
+4         1      0      1      0      1      1      1      1      1      0
+5         1      1      0      1      0      1      1      1      1      1
+6         1      1      1      0      0      1      1      1      1      1
+7         1      0      0      1      0      0      0      1      1      1
+8         1      0      1      1      1      1      1      1      1      1
+9         0      0      0      0      0      0      0      0      1      0
+...
+[5000 rows x 10 columns]
+Training classifier...
+Done.
+Building graph...
+Done. Showing Graph.
+```
+
 A social graph is then constructed, with weights consisting of the Gaussian Naive Bayes probability of that user interacting with given a 
 neighbor N. The graph is then drawn:
 
