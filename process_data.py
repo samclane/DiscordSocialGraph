@@ -19,7 +19,7 @@ def process_data(df: pandas.DataFrame):
     return enc, clf
 
 
-def graph_data(encoder: MultiLabelBinarizer, classifier: GaussianNB):
+def graph_data(encoder: MultiLabelBinarizer, classifier: GaussianNB, noise_floor: float=0):
     social_graph = nx.DiGraph()
     social_graph.add_nodes_from(classifier.classes_)
     for u in classifier.classes_:
@@ -29,7 +29,8 @@ def graph_data(encoder: MultiLabelBinarizer, classifier: GaussianNB):
             vec = encoder.transform([[o]])
             prob_map = {classifier.classes_[n]: classifier.predict_proba(vec)[0][n] for n in
                         range(len(classifier.classes_))}
-            social_graph.add_edge(u, o, weight=float(prob_map[u]))
+            if float(prob_map[u]) > noise_floor:
+                social_graph.add_edge(u, o, weight=float(prob_map[u]))
 
     plt.subplot(121)
     edges, weights = zip(*nx.get_edge_attributes(social_graph, 'weight').items())
@@ -41,6 +42,7 @@ def graph_data(encoder: MultiLabelBinarizer, classifier: GaussianNB):
 
 if __name__ == "__main__":
     df = pandas.read_csv(os.getcwd() + "\\" + str(sys.argv[1]))
+    # pandas doesn't like saving lists; we have to rebuild `present` from string
     df['present'] = df['present'].apply(literal_eval)
     enc, clf = process_data(df)
     graph_data(enc, clf)
