@@ -49,6 +49,7 @@ def generate_samples(samples, num_members, savepath):
 if __name__ == "__main__":
     if len(sys.argv) < 4:
         print("Usage: python generate_data.py <samples> <num_members> <filename>")
+        exit(-1)
     samples = int(sys.argv[1])
     num_members = int(sys.argv[2])
     savepath = os.getcwd() + '\\' + str(sys.argv[3])

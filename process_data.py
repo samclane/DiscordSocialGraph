@@ -41,6 +41,9 @@ def graph_data(encoder: MultiLabelBinarizer, classifier: GaussianNB, noise_floor
 
 
 if __name__ == "__main__":
+    if len(sys.argv) < 2:
+        print("Usage: python process_data.py <filename>")
+        exit(-1)
     df = pandas.read_csv(os.getcwd() + "\\" + str(sys.argv[1]))
     # pandas doesn't like saving lists; we have to rebuild `present` from string
     df['present'] = df['present'].apply(literal_eval)
