@@ -2,9 +2,9 @@ import os
 import sys
 from ast import literal_eval
 
-import pandas
-import networkx as nx
 import matplotlib.pyplot as plt
+import networkx as nx
+import pandas
 from sklearn.naive_bayes import GaussianNB
 from sklearn.preprocessing import MultiLabelBinarizer
 
@@ -27,12 +27,17 @@ def graph_data(encoder: MultiLabelBinarizer, classifier: GaussianNB):
         others.remove(u)
         for o in others:
             vec = encoder.transform([[o]])
-            prob_map = {classifier.classes_[n]: classifier.predict_proba(vec)[0][n] for n in range(len(classifier.classes_))}
+            prob_map = {classifier.classes_[n]: classifier.predict_proba(vec)[0][n] for n in
+                        range(len(classifier.classes_))}
             social_graph.add_edge(u, o, weight=float(prob_map[u]))
 
     plt.subplot(121)
-    nx.draw(social_graph, with_labels=True, arrows=False, font_weight='bold')
+    edges, weights = zip(*nx.get_edge_attributes(social_graph, 'weight').items())
+    pos = nx.spring_layout(social_graph)
+    nx.draw(social_graph, pos, edgelist=edges, edge_color=weights, edge_cmap=plt.get_cmap("Blues"), with_labels=True,
+            arrowstyle='fancy')
     plt.show()
+
 
 if __name__ == "__main__":
     df = pandas.read_csv(os.getcwd() + "\\" + str(sys.argv[1]))

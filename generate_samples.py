@@ -18,7 +18,7 @@ def generate_samples(samples, num_members, savepath):
     # Create some random friendships
     print("Generating friends...")
     friendlist = {}
-    for _ in range(random.randint(1, len(user_ids)//4)):
+    for _ in range(random.randint(1, len(user_ids) // 4)):
         u0, u1 = random.sample(user_ids, 2)
         friendlist[u0] = friendship(u0, u1, random.uniform(.5, 1))
         print(f"{u0} and {u1} are friends with weight .{int(100*friendlist[u0].weight)}")
