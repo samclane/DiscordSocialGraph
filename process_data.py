@@ -9,13 +9,14 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.preprocessing import MultiLabelBinarizer
 
 
-def process_data(df: pandas.DataFrame):
+def encode_and_train(df: pandas.DataFrame):
     enc = MultiLabelBinarizer()
     print("Encoding data...")
-    print(pandas.DataFrame(enc.fit_transform(df["present"]), columns=enc.classes_, index=df.index))
+    print(pandas.DataFrame(enc.fit_transform(df["present"] + df["member"].apply(str).apply(lambda x: [x])), columns=enc.classes_, index=df.index))
+    # BUG: Still isn't encoding member names that aren't in "present". WHYYY
     clf = GaussianNB()
     print("Training classifier...")
-    clf.fit(enc.fit_transform(df["present"]), list(df["member"]))
+    clf.fit(enc.fit_transform(df["present"]), list(df["member"].apply(str)))
     print("Done.")
     return enc, clf
 
@@ -41,6 +42,7 @@ def graph_data(encoder: MultiLabelBinarizer, classifier: GaussianNB, noise_floor
             arrowstyle='fancy')
     print("Done. Showing graph.")
     plt.show()
+    print(max(social_graph.in_degree(weight='weight')))
 
 
 if __name__ == "__main__":
@@ -54,7 +56,7 @@ if __name__ == "__main__":
     df = pandas.read_csv(path)
     # pandas doesn't like saving lists; we have to rebuild `present` from string
     df['present'] = df['present'].apply(literal_eval)
-    enc, clf = process_data(df)
+    enc, clf = encode_and_train(df)
     if args.noise_floor:
         graph_data(enc, clf, args.noise_floor)
     else:

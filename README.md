@@ -59,10 +59,10 @@ timestamp
 Saving data to C:\Users\SawyerPC\PycharmProjects\DiscordSocialGraph\data.csv.
 ```
 
-The data can then by processed by running `process_data.py`
+The data can then by processed by running `encode_and_train.py`
 
 ```
-$ python process_data.py data.csv
+$ python encode_and_train.py data.csv
 Reading C:\Users\SawyerPC\PycharmProjects\DiscordSocialGraph\data.csv...
 Encoding data...
       user0  user1  user2  user3  user4  user5  user6  user7  user8  user9
@@ -92,7 +92,7 @@ neighbor N. The graph is then drawn:
 A "noise floor" can be added to prune insignificant edges. A `noise_floor` of `.15` can be used by calling
 
 ```
-python process_data.py data.csv -nf .15
+python encode_and_train.py data.csv -nf .15
 ```
 
 Which produces the following graph:
