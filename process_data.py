@@ -25,13 +25,13 @@ def graph_data(encoder: MultiLabelBinarizer, classifier: GaussianNB, noise_floor
     print("Building graph...")
     social_graph = nx.DiGraph()
     social_graph.add_nodes_from(classifier.classes_)
-    for u in classifier.classes_:
-        others = list(classifier.classes_)
+    for u in encoder.classes_:
+        others = list(encoder.classes_)
         others.remove(u)
         for o in others:
             vec = encoder.transform([[o]])
-            prob_map = {classifier.classes_[n]: classifier.predict_proba(vec)[0][n] for n in
-                        range(len(classifier.classes_))}
+            prob_map = {encoder.classes_[n]: classifier.predict_proba(vec)[0][n] for n in
+                        range(len(encoder.classes_))}
             if float(prob_map[u]) > noise_floor:
                 social_graph.add_edge(u, o, weight=float(prob_map[u]))
 
