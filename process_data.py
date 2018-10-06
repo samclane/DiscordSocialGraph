@@ -36,8 +36,8 @@ def graph_data(encoder: MultiLabelBinarizer, classifier: GaussianNB, noise_floor
 
     plt.subplot(121)
     edges, weights = zip(*nx.get_edge_attributes(social_graph, 'weight').items())
-    pos = nx.spring_layout(social_graph)
-    nx.draw(social_graph, pos, edgelist=edges, edge_color=weights, edge_cmap=plt.get_cmap("Blues"), with_labels=True,
+    pos = nx.circular_layout(social_graph)
+    nx.draw(social_graph, pos, edgelist=edges, edge_color=weights, edge_cmap=plt.get_cmap("viridis"), with_labels=True,
             arrowstyle='fancy')
     print("Done. Showing graph.")
     plt.show()

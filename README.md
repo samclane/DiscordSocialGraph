@@ -87,7 +87,7 @@ Done. Showing graph.
 A social graph is then constructed, with weights consisting of the Gaussian Naive Bayes probability of that user interacting with given a 
 neighbor N. The graph is then drawn:
 
-![Social Graph](https://i.imgur.com/2OYFyZE.png)
+![Social Graph](samples/Figure_1.png)
 
 A "noise floor" can be added to prune insignificant edges. A `noise_floor` of `.15` can be used by calling
 
@@ -97,7 +97,7 @@ python process_data.py data.csv -nf .15
 
 Which produces the following graph:
 
-![Pruned Graph](https://i.imgur.com/dnK5u4Z.png)
+![Pruned Graph](samples/Figure_2.png)
 
 Due to the complete randomness of the data generation methods, some "strong friendships" may occur naturally, dwarfing 
 any intentional bias. 
