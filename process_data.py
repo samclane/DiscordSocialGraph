@@ -21,7 +21,7 @@ def encode_and_train(df: pandas.DataFrame) -> (MultiLabelBinarizer, GaussianNB):
     return enc, clf
 
 
-def graph_data(encoder: MultiLabelBinarizer, classifier: GaussianNB, noise_floor: float = 0):
+def graph_data(encoder: MultiLabelBinarizer, classifier: GaussianNB, noise_floor: float = 0, name_file=None):
     print("Building graph...")
     social_graph = nx.DiGraph()
     social_graph.add_nodes_from(encoder.classes_)
@@ -40,8 +40,9 @@ def graph_data(encoder: MultiLabelBinarizer, classifier: GaussianNB, noise_floor
             social_graph.add_edge(u, o, weight=weight)
 
     plt.subplot(121)
-    mapping = {k: v for (k, v) in get_dict_from_namefile().items() if k in social_graph.nodes}
-    nx.relabel_nodes(social_graph, mapping, copy=False)
+    if name_file:
+        mapping = {k: v for (k, v) in get_dict_from_namefile(name_file).items() if k in social_graph.nodes}
+        nx.relabel_nodes(social_graph, mapping, copy=False)
     pos = nx.circular_layout(social_graph)
     edges, weights = zip(*[i for i in nx.get_edge_attributes(social_graph, 'weight').items() if i[1] > noise_floor])
     nx.draw(social_graph, pos, edgelist=edges, edge_color=weights, edge_cmap=plt.get_cmap("winter"), with_labels=True,
@@ -61,8 +62,8 @@ def save_as_graphml(graph, filename):
     print("Done.")
 
 
-def get_dict_from_namefile():
-    df = pandas.read_csv('names.csv', usecols=["member", "username"], index_col="member")
+def get_dict_from_namefile(file):
+    df = pandas.read_csv(file, usecols=["member", "username"], index_col="member")
     namemap = {}
     for uid in df.index:
         namemap[str(uid)] = df.loc[uid]['username']
@@ -72,9 +73,11 @@ def get_dict_from_namefile():
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("filename", help="Name of file in the current working directory that contains the dataframe "
-                                         "info")
-    parser.add_argument("-nf", "--noise_floor", type=float)
-    parser.add_argument("-s", "--save_file", type=str)
+                                         "info", type=str)
+    parser.add_argument("-nf", "--noise_floor", type=float, help="Cull edges below a certain weight. Only affects "
+                                                                 "plot view.")
+    parser.add_argument("-n", "--names", help="Name of csv file mapping Discord IDs and Usernames")
+    parser.add_argument("-s", "--save_file", type=str, help="Filename to save as .graphml")
     args = parser.parse_args()
     path = os.getcwd() + "\\" + args.filename
     print(f"Reading {path}...")
@@ -84,9 +87,9 @@ if __name__ == "__main__":
     enc, clf = encode_and_train(df)
 
     if args.noise_floor:
-        graph = graph_data(enc, clf, args.noise_floor)
+        graph = graph_data(enc, clf, args.noise_floor, name_file=args.names)
     else:
-        graph = graph_data(enc, clf)
+        graph = graph_data(enc, clf, name_file=args.names)
 
     if args.save_file:
         save_as_graphml(graph, args.save_file)

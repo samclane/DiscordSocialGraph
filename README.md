@@ -104,3 +104,8 @@ any intentional bias.
 
 The main objective is to find the "linchpin" of the server; that is, the node in the graph with the most incoming weight
 , signifying they cause the server's population and interaction levels to increase the most. 
+
+If you have a map between Discord user-IDs and usernames, you can provide it as csv file with the `-n <FILENAME>` or 
+`--names <FILENAME>`
+
+Using the `-s <FILENAME>` or `--save_file <FILENAME>` option, you can output the graph data as a `.graphml` file.
