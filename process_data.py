@@ -48,7 +48,17 @@ def graph_data(encoder: MultiLabelBinarizer, classifier: GaussianNB, noise_floor
             arrowstyle='fancy')
     print("Done. Showing graph.")
     plt.show()
+    print("In-degree weight sums:")
     print(sorted(social_graph.in_degree(weight='weight'), key=lambda x: x[1], reverse=True))
+    return social_graph
+
+
+def save_as_graphml(graph, filename):
+    print("Saving graph...")
+    for node in graph.nodes():
+        graph.node[node]['label'] = node
+    nx.write_graphml(graph, filename)
+    print("Done.")
 
 
 def get_dict_from_namefile():
@@ -64,6 +74,7 @@ if __name__ == "__main__":
     parser.add_argument("filename", help="Name of file in the current working directory that contains the dataframe "
                                          "info")
     parser.add_argument("-nf", "--noise_floor", type=float)
+    parser.add_argument("-s", "--save_file", type=str)
     args = parser.parse_args()
     path = os.getcwd() + "\\" + args.filename
     print(f"Reading {path}...")
@@ -73,6 +84,9 @@ if __name__ == "__main__":
     enc, clf = encode_and_train(df)
 
     if args.noise_floor:
-        graph_data(enc, clf, args.noise_floor)
+        graph = graph_data(enc, clf, args.noise_floor)
     else:
-        graph_data(enc, clf)
+        graph = graph_data(enc, clf)
+
+    if args.save_file:
+        save_as_graphml(graph, args.save_file)
