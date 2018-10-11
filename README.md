@@ -12,15 +12,17 @@ The data is stored in a `csv` file, looking like the following:
 
 ```csv
 timestamp,member,present
-1538780281,user9,"['user4', 'user6']"
-1538780523,user9,"['user7', 'user0', 'user5', 'user1', 'user3', 'user8', 'user2', 'user6']"
-1538781457,user0,"['user4', 'user3']"
-1538782163,user1,['user9']
-1538782577,user8,['user3']
-1538782852,user7,"['user0', 'user4', 'user8', 'user5', 'user3']"
-1538782998,user1,"['user9', 'user2', 'user3', 'user7', 'user4']"
-1538783891,user0,"['user7', 'user5', 'user3', 'user4', 'user8', 'user1']"
-1538784016,user5,"['user2', 'user1']"
+1539291278,user3,"['user8', 'user1', 'user0', 'user7', 'user4', 'user6']"
+1539291514,user1,"['user5', 'user0', 'user4', 'user2', 'user7', 'user8', 'user9', 'user6']"
+1539292425,user0,"['user7', 'user5', 'user3', 'user9', 'user4']"
+1539293267,user3,"['user4', 'user0', 'user2', 'user7', 'user6']"
+1539293442,user9,['user8']
+1539293609,user3,"['user6', 'user0', 'user7', 'user4']"
+1539293634,user3,"['user0', 'user6', 'user5', 'user8']"
+1539293848,user9,"['user6', 'user4', 'user0', 'user7']"
+1539294307,user9,"['user6', 'user1', 'user0']"
+1539294408,user6,"['user1', 'user4', 'user0', 'user7', 'user5', 'user2']"
+1539295361,user6,"['user0', 'user1', 'user4', 'user3', 'user9', 'user2']"
 ...
 ```
 
@@ -37,23 +39,22 @@ Sample:
 $ python generate_samples.py 5000 10 data.csv
 Created 10 members.
 Generating friends...
-user2 and user3 are friends with weight .70
-user7 and user3 are friends with weight .92
-user4 and user0 are friends with weight .82
-user4 and user0 are friends with weight .72
-user4 and user0 are friends with weight .85
+user2 and user4 are friends with weight .93
+user0 and user4 are friends with weight .92
+user3 and user6 are friends with weight .99
+user8 and user2 are friends with weight .91
+user6 and user2 are friends with weight .98
 Generating samples
 Data successfully generated!
 ------
            member                                            present
 timestamp                                                           
-1538780281  user9                                     [user4, user6]
-1538780523  user9  [user7, user0, user5, user1, user3, user8, use...
-1538781457  user0                                     [user4, user3]
-1538782163  user1                                            [user9]
-1538782577  user8                                            [user3]
-1538782852  user7                [user0, user4, user8, user5, user3]
-1538782998  user1                [user9, user2, user3, user7, user4]
+1539291278  user3         [user8, user1, user0, user7, user4, user6]
+1539291514  user1  [user5, user0, user4, user2, user7, user8, use...
+1539292425  user0                [user7, user5, user3, user9, user4]
+1539293267  user3                [user4, user0, user2, user7, user6]
+1539293442  user9                                            [user8]
+1539293609  user3                       [user6, user0, user7, user4]
 ...
 [5000 rows x 2 columns]
 Saving data to C:\Users\SawyerPC\PycharmProjects\DiscordSocialGraph\data.csv.
@@ -65,34 +66,38 @@ The data can then by processed by running `encode_and_train.py`
 $ python encode_and_train.py data.csv
 Reading C:\Users\SawyerPC\PycharmProjects\DiscordSocialGraph\data.csv...
 Encoding data...
-      user0  user1  user2  user3  user4  user5  user6  user7  user8  user9
-0         0      0      0      0      1      0      1      0      0      0
-1         1      1      1      1      0      1      1      1      1      0
-2         0      0      0      1      1      0      0      0      0      0
-3         0      0      0      0      0      0      0      0      0      1
-4         0      0      0      1      0      0      0      0      0      0
-5         1      0      0      1      1      1      0      0      1      0
-6         0      0      1      1      1      0      0      1      0      1
-7         0      1      0      1      1      1      0      1      1      0
-8         0      1      1      0      0      0      0      0      0      0
-9         0      0      0      1      1      1      0      1      1      1
+   user0  user1  user2  user3  user4  user5  user6  user7  user8  user9
+0         1      1      0      1      1      0      1      1      1      0
+1         1      1      1      0      1      1      1      1      1      1
+2         1      0      0      1      1      1      0      1      0      1
+3         1      0      1      1      1      0      1      1      0      0
+4         0      0      0      0      0      0      0      0      1      1
+5         1      0      0      1      1      0      1      1      0      0
+6         1      0      0      1      0      1      1      0      1      0
+7         1      0      0      0      1      0      1      1      0      1
+8         1      1      0      0      0      0      1      0      0      1
+9         1      1      1      0      1      1      1      1      0      0
+
 ...
 [5000 rows x 10 columns]
-Training classifier...
+Training svm...
+Cross-validation SVC : [ 0.369   0.3315  0.347   0.326   0.3165]
 Done.
 Building graph...
+In-degree weight sums:
+[('user8', 0.9723977805015738), ('user3', 0.9566272749998164), ('user0', 0.9558614388968902), ...]
 Done. Showing graph.
 ```
 
-A social graph is then constructed, with weights consisting of the Gaussian Naive Bayes probability of that user interacting with given a 
+A social graph is then constructed, with weights consisting of the SVM probability of that user interacting with given a 
 neighbor N. The graph is then drawn:
 
 ![Social Graph](samples/Figure_1.png)
 
-A "noise floor" can be added to prune insignificant edges. A `noise_floor` of `.15` can be used by calling
+A "noise floor" can be added to prune insignificant edges. A `noise_floor` of `.09` can be used by calling
 
 ```
-python encode_and_train.py data.csv -nf .15
+python encode_and_train.py data.csv -nf .09
 ```
 
 Which produces the following graph:

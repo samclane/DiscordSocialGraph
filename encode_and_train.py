@@ -7,18 +7,25 @@ import networkx as nx
 import pandas
 from sklearn.naive_bayes import GaussianNB
 from sklearn.preprocessing import MultiLabelBinarizer
-
+from sklearn.model_selection import KFold, cross_val_score
+from sklearn import svm
 
 def encode_and_train(df: pandas.DataFrame) -> (MultiLabelBinarizer, GaussianNB):
     enc = MultiLabelBinarizer()
     print("Encoding data...")
     print(pandas.DataFrame(enc.fit_transform(df["present"] + df["member"].apply(str).apply(lambda x: [x])),
                            columns=enc.classes_, index=df.index))
-    clf = GaussianNB()
-    print("Training classifier...")
-    clf.fit(enc.transform(df["present"]), list(df["member"].apply(str)))
+    #print("Training GaussianNB classifier...")
+    #clf = GaussianNB()
+    #clf.fit(enc.transform(df["present"]), list(df["member"].apply(str)))
+    X, y = enc.transform(df["present"]), list(df["member"].apply(str))
+    #print(f"Cross-validation GNB: {cross_val_score(clf, X, y, cv=KFold(n_splits=5), n_jobs=-1)}")
+    print("Training svm...")
+    svc = svm.SVC(C=1.1, kernel="linear", probability=True, class_weight='balanced')
+    svc.fit(enc.transform(df["present"]), list(df["member"].apply(str)))
+    print(f"Cross-validation SVC : {cross_val_score(svc, X, y, cv=KFold(n_splits=5), n_jobs=-1)}")  # Note: SVC lookin' better
     print("Done.")
-    return enc, clf
+    return enc, svc
 
 
 def graph_data(encoder: MultiLabelBinarizer, classifier: GaussianNB, noise_floor: float = 0, name_file=None):
@@ -37,20 +44,22 @@ def graph_data(encoder: MultiLabelBinarizer, classifier: GaussianNB, noise_floor
                 weight = float(prob_map[u])
             else:
                 weight = 0
-            social_graph.add_edge(u, o, weight=weight)
+            if weight > noise_floor:
+                social_graph.add_edge(u, o, weight=weight)
 
     plt.subplot(121)
     if name_file:
         mapping = {k: v for (k, v) in get_dict_from_namefile(name_file).items() if k in social_graph.nodes}
         nx.relabel_nodes(social_graph, mapping, copy=False)
-    pos = nx.circular_layout(social_graph)
+    print("In-degree weight sums:")
+    print(sorted(social_graph.in_degree(weight='weight'), key=lambda x: x[1], reverse=True))
+    # pos = nx.circular_layout(social_graph)
+    pos = nx.fruchterman_reingold_layout(social_graph)
     edges, weights = zip(*[i for i in nx.get_edge_attributes(social_graph, 'weight').items() if i[1] > noise_floor])
     nx.draw(social_graph, pos, edgelist=edges, edge_color=weights, edge_cmap=plt.get_cmap("winter"), with_labels=True,
             arrowstyle='fancy')
     print("Done. Showing graph.")
     plt.show()
-    print("In-degree weight sums:")
-    print(sorted(social_graph.in_degree(weight='weight'), key=lambda x: x[1], reverse=True))
     return social_graph
 
 
