@@ -4,6 +4,7 @@ from ast import literal_eval
 
 import matplotlib.pyplot as plt
 import networkx as nx
+import numpy as np
 import pandas
 from sklearn import svm
 from sklearn.metrics import roc_curve, auc
@@ -38,7 +39,8 @@ def compute_roc_auc(n_classes, y_test, y_score):
         roc_auc[i] = auc(fpr[i], tpr[i])
 
     # Compute micro-average ROC curve and ROC area
-    fpr["micro"], tpr["micro"], _ = roc_curve(y_test.ravel(), y_score.ravel())
+    min_len = min(len(y_test.ravel()), len(y_score.ravel()))
+    fpr["micro"], tpr["micro"], _ = roc_curve(y_test.ravel()[:min_len], y_score.ravel()[:min_len])
     roc_auc["micro"] = auc(fpr["micro"], tpr["micro"])
     return fpr, tpr, roc_auc
 
@@ -46,21 +48,22 @@ def compute_roc_auc(n_classes, y_test, y_score):
 def encode_and_train(df: pandas.DataFrame) -> (MultiLabelBinarizer, GaussianNB):
     mlb = MultiLabelBinarizer()
     print("Encoding data...")
-    print(pandas.DataFrame(mlb.fit_transform(df["present"] + df["member"].apply(str).apply(lambda x: [x])),
-                           columns=mlb.classes_, index=df.index))
+    mlb.fit(df["present"] + df["member"].apply(str).apply(lambda x: [x]))
     enc = LabelEncoder()
-    X, y = mlb.transform(df["present"]), enc.fit_transform(df["member"].apply(str))
+    enc.fit(df["member"].apply(str).append(pandas.Series(np.concatenate(df["present"]).ravel())))
+    X, y = mlb.transform(df["present"]), enc.transform(df["member"].apply(str))
     print("Training svm...")
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.5, random_state=0)
     svc = svm.SVC(C=1.1, kernel="linear", probability=True, class_weight='balanced')
     svc.fit(X_train, y_train)
     print(
-        f"Cross-validation SVC : {cross_val_score(svc, X_test, y_test, cv=KFold(n_splits=5), n_jobs=-1)}")  # Note: SVC lookin' better
+        f"Cross-validation SVC : {cross_val_score(svc, X_test, y_test, cv=KFold(n_splits=5), n_jobs=-1)}")
     print("Done.")
     return mlb, svc, (X, y, X_train, X_test, y_train, y_test), enc
 
 
-def graph_data(binarizer: MultiLabelBinarizer, encoder: LabelEncoder, classifier: GaussianNB, noise_floor: float = 0, name_file=None):
+def graph_data(binarizer: MultiLabelBinarizer, encoder: LabelEncoder, classifier: GaussianNB, noise_floor: float = 0,
+               name_file=None):
     print("Building graph...")
     social_graph = nx.DiGraph()
     social_graph.add_nodes_from(binarizer.classes_)
