@@ -114,3 +114,10 @@ If you have a map between Discord user-IDs and usernames, you can provide it as 
 `--names <FILENAME>`
 
 Using the `-s <FILENAME>` or `--save_file <FILENAME>` option, you can output the graph data as a `.graphml` file.
+
+After the social graph is displayed, the Receiver Operating Characteristic (ROC) graph will be calculated and displayed. 
+This gives the relationship between the True Positive Rate (TPR) and False Positive Rate (FPR), gauging if the model 
+performs better than random chance. Here is the ROC curve for our generated data. This indicates the model is performing 
+exceptionally well on the dataset.
+
+![ROC Curve](samples/Figure_3.png)
