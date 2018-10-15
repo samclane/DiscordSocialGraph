@@ -121,3 +121,10 @@ performs better than random chance. Here is the ROC curve for our generated data
 exceptionally well on the dataset.
 
 ![ROC Curve](samples/Figure_3.png)
+
+Compare this to a model trained on purely random data. 
+
+![Bad ROC](samples/Figure_4.png)
+
+The model eventually learns incidental relationships in the data and is consistently better than guessing, but the rate 
+it grows is much slower than on the biased dataset. The Area Under ROC (AUC) also goes from `.91` to `.74`.
