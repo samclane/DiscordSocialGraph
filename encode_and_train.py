@@ -11,6 +11,7 @@ from sklearn.metrics import roc_curve, auc
 from sklearn.model_selection import KFold, cross_val_score
 from sklearn.model_selection import train_test_split
 from sklearn.naive_bayes import GaussianNB
+from sklearn.neural_network import MLPClassifier
 from sklearn.preprocessing import MultiLabelBinarizer, LabelEncoder
 
 
@@ -45,28 +46,33 @@ def compute_roc_auc(n_classes, y_test, y_score):
     return fpr, tpr, roc_auc
 
 
-def encode_and_train(df: pandas.DataFrame) -> (MultiLabelBinarizer, GaussianNB):
+def encode_and_train(df: pandas.DataFrame):
+    # Encode "present" users as OneHotVectors
     mlb = MultiLabelBinarizer()
     print("Encoding data...")
     mlb.fit(df["present"] + df["member"].apply(str).apply(lambda x: [x]))
+
+    # Encode user labels as ints
     enc = LabelEncoder()
-    enc.fit(df["member"].apply(str).append(pandas.Series(np.concatenate(df["present"]).ravel())))
+    flat_member_list = df["member"].apply(str).append(pandas.Series(np.concatenate(df["present"]).ravel()))
+    enc.fit(flat_member_list)
     X, y = mlb.transform(df["present"]), enc.transform(df["member"].apply(str))
     print("Training svm...")
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.5, random_state=0)
-    svc = svm.SVC(C=1.1, kernel="linear", probability=True, class_weight='balanced')
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.5, random_state=0, stratify=y)
+    svc = svm.SVC(C=1.1, kernel="linear", probability=True)
+    # svc = MLPClassifier(solver='lbfgs', alpha=1e-5, hidden_layer_sizes=(20,), random_state=1)
     svc.fit(X_train, y_train)
     print(
         f"Cross-validation SVC : {cross_val_score(svc, X_test, y_test, cv=KFold(n_splits=5), n_jobs=-1)}")
     print("Done.")
-    return mlb, svc, (X, y, X_train, X_test, y_train, y_test), enc
+    return mlb, svc, (X, y, X_train, X_test, y_train, y_test), enc, flat_member_list
 
 
-def graph_data(binarizer: MultiLabelBinarizer, encoder: LabelEncoder, classifier: GaussianNB, noise_floor: float = 0,
+def graph_data(binarizer: MultiLabelBinarizer, encoder: LabelEncoder, classifier, member_list, noise_floor: float = 0,
                name_file=None):
     print("Building graph...")
     social_graph = nx.DiGraph()
-    social_graph.add_nodes_from(binarizer.classes_)
+    social_graph.add_nodes_from(encoder.classes_)
     for u in classifier.classes_:
         u = encoder.inverse_transform(u)
         others = list(binarizer.classes_)
@@ -77,11 +83,14 @@ def graph_data(binarizer: MultiLabelBinarizer, encoder: LabelEncoder, classifier
             if encoder.transform([o]) in classifier.classes_:
                 prob_map = {encoder.inverse_transform(classifier.classes_[n]): classifier.predict_proba(vec)[0][n] for
                             n in range(len(classifier.classes_))}
-                weight = float(prob_map[u])
+                weight = float(prob_map[u]) * (1 + member_list.value_counts(normalize=True)[o])
             else:
                 weight = 0
-            if weight > noise_floor:
-                social_graph.add_edge(u, o, weight=weight)
+            social_graph.add_edge(u, o, weight=weight)
+    # Prune useless nodes
+    for n in list(social_graph.nodes):
+        if social_graph.in_degree(weight='weight')[n] == 0 and social_graph.out_degree(weight='weight')[n] == 0:
+            social_graph.remove_node(n)
 
     plt.subplot(121)
     if name_file:
@@ -89,8 +98,8 @@ def graph_data(binarizer: MultiLabelBinarizer, encoder: LabelEncoder, classifier
         nx.relabel_nodes(social_graph, mapping, copy=False)
     print("In-degree weight sums:")
     print(sorted(social_graph.in_degree(weight='weight'), key=lambda x: x[1], reverse=True))
-    # pos = nx.circular_layout(social_graph)
-    pos = nx.fruchterman_reingold_layout(social_graph)
+    pos = nx.circular_layout(social_graph)
+    # pos = nx.fruchterman_reingold_layout(social_graph)
     edges, weights = zip(*[i for i in nx.get_edge_attributes(social_graph, 'weight').items() if i[1] > noise_floor])
     nx.draw(social_graph, pos, edgelist=edges, edge_color=weights, edge_cmap=plt.get_cmap("winter"), with_labels=True,
             arrowstyle='fancy')
@@ -114,6 +123,10 @@ def get_dict_from_namefile(file):
         namemap[str(uid)] = df.loc[uid]['username']
     return namemap
 
+def preprocess(df: pandas.DataFrame):
+    df['present'] = df['present'].apply(literal_eval)
+    df = df[df.groupby('member').member.transform(len) > 1].reset_index()
+    return df
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -128,15 +141,15 @@ if __name__ == "__main__":
     print(f"Reading {path}...")
     df = pandas.read_csv(path)
     # pandas doesn't like saving lists; we have to rebuild `present` from string
-    df['present'] = df['present'].apply(literal_eval)
-    mlb, clf, split_data, enc = encode_and_train(df)
+    df = preprocess(df)
+    mlb, clf, split_data, enc, member_list = encode_and_train(df)
     X, y, X_train, X_test, y_train, y_test = split_data
 
     # Generate Social Graph
     if args.noise_floor:
-        graph = graph_data(mlb, enc, clf, args.noise_floor, name_file=args.names)
+        graph = graph_data(mlb, enc, clf, member_list, args.noise_floor, name_file=args.names)
     else:
-        graph = graph_data(mlb, enc, clf, name_file=args.names)
+        graph = graph_data(mlb, enc, clf, member_list, name_file=args.names)
 
     # Save File
     if args.save_file:
