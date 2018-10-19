@@ -151,9 +151,8 @@ def get_args():
     return parser.parse_args()
 
 
-def main():
-    args = get_args()
-    path = os.getcwd() + "\\" + args.filename
+def main(data_file, noise_floor=0, name_file=None, save_file=None):
+    path = os.getcwd() + "\\" + data_file
     print(f"Reading {path}...")
     df = pandas.read_csv(path)
     # pandas doesn't like saving lists; we have to rebuild `present` from string
@@ -162,14 +161,11 @@ def main():
     X, y, X_train, X_test, y_train, y_test = split_data
 
     # Generate Social Graph
-    if args.noise_floor:
-        graph = graph_data(mlb, enc, clf, member_list, args.noise_floor, name_file=args.names)
-    else:
-        graph = graph_data(mlb, enc, clf, member_list, name_file=args.names)
+    graph = graph_data(mlb, enc, clf, member_list, noise_floor, name_file=name_file)
 
     # Save File
-    if args.save_file:
-        save_as_graphml(graph, args.save_file)
+    if save_file:
+        save_as_graphml(graph, save_file)
 
     y_score = clf.decision_function(X_test)
     y_test = mlb.transform([[enc.inverse_transform(i)] for i in y_test])
@@ -178,4 +174,5 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    args = get_args()
+    main(args.filename, args.noise_floor, args.names, args.save_file)
