@@ -8,8 +8,7 @@ import numpy as np
 import pandas
 from sklearn import svm
 from sklearn.metrics import roc_curve, auc
-from sklearn.model_selection import KFold, cross_val_score
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import KFold, cross_val_score, train_test_split, GridSearchCV
 from sklearn.preprocessing import MultiLabelBinarizer, LabelEncoder
 
 
@@ -19,6 +18,15 @@ def preprocess(df: pandas.DataFrame):
     # Remove members that only appear once
     df = df[df.groupby('member').member.transform(len) > 1].reset_index()
     return df
+
+
+def svm_param_selection(X, y, nfolds):
+    Cs = np.linspace(0.001, 10, 100)
+    gammas = np.linspace(0.01, 1, 10)
+    param_grid = {'C': Cs, 'gamma': gammas}
+    grid_search = GridSearchCV(svm.SVC(kernel='linear'), param_grid, cv=nfolds)
+    grid_search.fit(X, y)
+    return grid_search.best_params_
 
 
 def encode_and_train(df: pandas.DataFrame):
@@ -34,7 +42,9 @@ def encode_and_train(df: pandas.DataFrame):
     X, y = mlb.transform(df["present"]), enc.transform(df["member"].apply(str))
     print("Training svm...")
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.5, random_state=0, stratify=y)
-    svc = svm.SVC(C=1.1, kernel="linear", probability=True)
+    params = svm_param_selection(X, y, 2)
+    print(params)
+    svc = svm.SVC(C=params['C'], gamma=params['gamma'], kernel="linear", probability=True)
     # svc = MLPClassifier(solver='lbfgs', alpha=1e-5, hidden_layer_sizes=(20,), random_state=1)
     svc.fit(X_train, y_train)
     print(
@@ -130,7 +140,7 @@ def save_as_graphml(graph, filename):
     print("Done.")
 
 
-def main():
+def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("filename", help="Name of file in the current working directory that contains the dataframe "
                                          "info", type=str)
@@ -138,7 +148,11 @@ def main():
                                                                  "plot view.")
     parser.add_argument("-n", "--names", help="Name of csv file mapping Discord IDs and Usernames")
     parser.add_argument("-s", "--save_file", type=str, help="Filename to save as .graphml")
-    args = parser.parse_args()
+    return parser.parse_args()
+
+
+def main():
+    args = get_args()
     path = os.getcwd() + "\\" + args.filename
     print(f"Reading {path}...")
     df = pandas.read_csv(path)
