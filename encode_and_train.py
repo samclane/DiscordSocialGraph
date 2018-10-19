@@ -21,7 +21,7 @@ def preprocess(df: pandas.DataFrame):
 
 
 def svm_param_selection(X, y, nfolds):
-    Cs = np.linspace(0.001, 10, 100)
+    Cs = np.linspace(0.001, 10, 10)
     gammas = np.linspace(0.01, 1, 10)
     param_grid = {'C': Cs, 'gamma': gammas}
     grid_search = GridSearchCV(svm.SVC(kernel='linear'), param_grid, cv=nfolds)
@@ -97,7 +97,6 @@ def graph_data(binarizer: MultiLabelBinarizer, encoder: LabelEncoder, classifier
     nx.draw(social_graph, pos, edgelist=edges, edge_color=weights, edge_cmap=plt.get_cmap("winter"), with_labels=True,
             arrowstyle='fancy')
     print("Done. Showing graph.")
-    plt.show()
     return social_graph
 
 
@@ -118,7 +117,7 @@ def compute_roc_auc(n_classes, y_test, y_score):
 
 
 def plot_roc_auc(fpr, tpr, roc_auc):
-    plt.figure()
+    plt.subplot(122)
     lw = 2
     plt.plot(fpr[2], tpr[2], color='darkorange',
              lw=lw, label='ROC curve (area = %0.2f)' % roc_auc[2])
