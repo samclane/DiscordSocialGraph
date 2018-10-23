@@ -42,7 +42,8 @@ def encode_and_train(df: pandas.DataFrame):
     X, y = mlb.transform(df["present"]), enc.transform(df["member"].apply(str))
     print("Training svm...")
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.5, random_state=0, stratify=y)
-    params = svm_param_selection(X, y, 2)
+    # params = svm_param_selection(X, y, 2)
+    params = {'C': 10.0, 'gamma': 0.01}
     print(params)
     svc = svm.SVC(C=params['C'], gamma=params['gamma'], kernel="linear", probability=True)
     # svc = MLPClassifier(solver='lbfgs', alpha=1e-5, hidden_layer_sizes=(20,), random_state=1)
@@ -67,14 +68,14 @@ def graph_data(binarizer: MultiLabelBinarizer, encoder: LabelEncoder, classifier
     social_graph = nx.DiGraph()
     social_graph.add_nodes_from(encoder.classes_)
     for u in classifier.classes_:
-        u = encoder.inverse_transform(u)
+        u = encoder.inverse_transform([u])[0]
         others = list(binarizer.classes_)
         others.remove(u)
         # Create outgoing edges
         for o in others:
             vec = binarizer.transform([[o]])
             if encoder.transform([o]) in classifier.classes_:
-                prob_map = {encoder.inverse_transform(classifier.classes_[n]): classifier.predict_proba(vec)[0][n] for
+                prob_map = {encoder.inverse_transform([classifier.classes_[n]])[0]: classifier.predict_proba(vec)[0][n] for
                             n in range(len(classifier.classes_))}
                 weight = float(prob_map[u]) * (1 + member_list.value_counts(normalize=True)[o])
             else:
@@ -150,7 +151,7 @@ def get_args():
     return parser.parse_args()
 
 
-def main(data_file, noise_floor=0, name_file=None, save_file=None):
+def prep_graphs(data_file, noise_floor=0, name_file=None, save_file=None):
     path = os.getcwd() + "\\" + data_file
     print(f"Reading {path}...")
     df = pandas.read_csv(path)
@@ -167,11 +168,11 @@ def main(data_file, noise_floor=0, name_file=None, save_file=None):
         save_as_graphml(graph, save_file)
 
     y_score = clf.decision_function(X_test)
-    y_test = mlb.transform([[enc.inverse_transform(i)] for i in y_test])
+    y_test = mlb.transform([[enc.inverse_transform([i])[0]] for i in y_test])
     fpr, tpr, roc_auc = compute_roc_auc(len(clf.classes_), y_test, y_score)
     plot_roc_auc(fpr, tpr, roc_auc)
 
 
 if __name__ == "__main__":
     args = get_args()
-    main(args.filename, args.noise_floor, args.names, args.save_file)
+    prep_graphs(args.filename, args.noise_floor, args.names, args.save_file)

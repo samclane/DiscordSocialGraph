@@ -1,3 +1,5 @@
+# NOT MAINTAINED: Check out the webapp at [https://infinite-sands-83078.herokuapp.com/]( https://infinite-sands-83078.herokuapp.com/)
+
 # DiscordSocialGraph
 
 Statistical and Machine Learning project for discovering and analysing social structures on Discord. 
@@ -107,7 +109,7 @@ Which produces the following graph:
 Due to the complete randomness of the data generation methods, some "strong friendships" may occur naturally, dwarfing 
 any intentional bias. 
 
-The main objective is to find the "linchpin" of the server; that is, the node in the graph with the most incoming weight
+The prep_graphs objective is to find the "linchpin" of the server; that is, the node in the graph with the most incoming weight
 , signifying they cause the server's population and interaction levels to increase the most. 
 
 If you have a map between Discord user-IDs and usernames, you can provide it as csv file with the `-n <FILENAME>` or 
